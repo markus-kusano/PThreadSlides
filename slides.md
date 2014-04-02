@@ -343,20 +343,51 @@ Event based programming: `signal` and `wait`
 ![](../cond_03.jpg)
 ![](../cond_04.jpg)
 
-## An Interrupt Handler is a Thread!
+## Producer-Consumer
 
   Cond c;
+  Queue<int> q;
 
-  void handler() {
-    wait(c);
+  void consumer() {
+    while(1) {
+      wait(c);
+      int item = q.get();
+      do_work(item);
+    }
   }
 
-  void external() {
-    signal(c);
+  void producer() {
+    while(1) {
+      q.insert(5);
+      signal(c);
+    }
   }
 
 `wait(c)` puts the thread to sleep until a signal on `c` is received
 
+There are some subtlties in this example that we are glossing over (starvation)
+
+## Interrupt Handlers are Threads
+
+    Cond int_pin;
+
+    void int_hander() {
+      while(1) {
+        wait(int_pin);
+        /* handle interrupt */
+      }
+    }
+
+    void external_event() {
+      signal(int_pin);
+    }
+
+The interrupt handler is sleeping until an external event causes it to wakeup.
+
+It then proceeds to sleep again until another event happens
+
+Are there subtle bugs (data races, atomicity violations) occuring on your
+micro-controller?
 
 ## PThreads
 POSIX Threads
